@@ -237,6 +237,3 @@ Access the MLflow UI at `http://localhost:5000` (when server is running).
 
 Course project for DATA 641 NLP.
 
----
-
-For detailed implementation notes and architecture decisions, see [CLAUDE.md](CLAUDE.md).

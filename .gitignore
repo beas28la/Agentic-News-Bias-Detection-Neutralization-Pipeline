@@ -6,6 +6,10 @@ __pycache__/
 # Data files
 data/
 
+# macOS files
+.DS_Store
+
+
 # Claude.md file
 Claude.md
 
