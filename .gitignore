@@ -3,6 +3,12 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Data files
+data/
+
+# Claude.md file
+Claude.md
+
 # C extensions
 *.so
 

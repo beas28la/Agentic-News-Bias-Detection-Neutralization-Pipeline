@@ -1,0 +1,32 @@
+# Bias Detection & Neutralization in News Text
+# Tested with Python 3.10+. Pin minimums; let pip resolve compatible upgrades.
+
+# ---- Data & preprocessing ----
+datasets>=4.8.0          # HuggingFace datasets (loads mediabiasgroup/BABE)
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.5.0      # TF-IDF baseline, train_test_split, metrics
+
+# ---- Classifier (BERT/RoBERTa) ----
+transformers>=5.5.0      # HuggingFace Transformers
+torch>=2.3.0             # PyTorch backend (CPU or CUDA build)
+accelerate>=1.0.0        # Trainer device placement & mixed precision
+# bitsandbytes>=0.46.0   # Optional: 4/8-bit quantization for Mistral on consumer GPUs
+
+# ---- Semantic similarity ----
+sentence-transformers>=5.0.0   # SBERT (all-MiniLM-L6-v2)
+
+# ---- LLM rewrite & orchestration ----
+langgraph>=1.1.0         # Pipeline state machine
+langchain-core>=1.0.0    # Required by langgraph
+
+# ---- Experiment tracking ----
+mlflow>=3.0.0
+
+# ---- Visualization & notebooks ----
+matplotlib>=3.8.0
+seaborn>=0.13.0
+jupyter>=1.0.0
+
+# ---- Testing ----
+pytest>=8.0.0
