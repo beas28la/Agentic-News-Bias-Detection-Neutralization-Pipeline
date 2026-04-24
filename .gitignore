@@ -6,6 +6,9 @@ __pycache__/
 # Data files
 data/
 results/
+models/
+mlruns/
+mlflow.db
 
 # macOS files
 .DS_Store
