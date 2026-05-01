@@ -61,16 +61,14 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 **Specific Steps:**
 
 1. Use `TfidfVectorizer(max_features=50000, ngram_range=(1,2))`
-2. Train **two separate classifiers:**
-  - Task A (binary): biased vs non-biased
-  - (optional) Task B (3-class): left vs center vs right (on biased samples only) 
+2. Train **Task A (binary): biased vs non-biased**
 3. Evaluate on validation set
-4. Record: F1 (macro), F1 per class, precision, recall
+4. Record: F1 (macro), F1 per class (biased/non-biased), precision, recall
 
 **Done when:** 
 
-- Both classifiers trained and evaluated
-- F1 macro scores recorded (this is your **B1 baseline** to beat later)
+- Classifier trained and evaluated
+- F1 macro score recorded (this is your **B1 baseline** to beat later)
 - Metrics logged to MLflow
 
 ---
@@ -82,22 +80,20 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 **Specific Steps:**
 
 1. Load `mistralai/Mistral-7B-Instruct-v0.2` from HuggingFace
-2. Write 3 system prompt templates:
-  - Left-leaning bias (remove progressive framing, keep facts)
-  - Right-leaning bias (remove conservative framing, keep facts)
-  - General bias (fallback prompt)
+2. Write 1 general system prompt template:
+  - General bias (remove loaded framing, keep facts)
 3. Test on 20 hand-selected biased sentences from training data
 4. Manually review all 20 outputs:
   - Does rewrite preserve the original meaning?
   - Is the tone genuinely neutral?
   - Does it avoid hallucinations or adding new facts?
-5. Iterate prompts at least once based on feedback
+5. Iterate prompt at least once based on feedback
 
 **Done when:**
 
-- 3 prompt templates written and tested
+- General prompt template written and tested
 - Manual review notes recorded
-- Prompts improved based on feedback
+- Prompt improved based on feedback
 
 ---
 
@@ -180,7 +176,7 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 **Specific Steps:**
 
 1. Define state schema (TypedDict) with fields:
-  - `input_sentence`, `bias_label`, `bias_type`, `bias_score`
+  - `input_sentence`, `bias_label`, `bias_score`
   - `rewritten_sentence`, `similarity_score`, `new_bias_score`
   - `retry_count`, `warning`, `final_output`
 2. Design 5 nodes (stub functions, return dummy values):
@@ -210,13 +206,12 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 **Specific Steps:**
 
 1. Select 50 biased sentences from test split:
-  - Aim for ~17 left-leaning, ~17 right-leaning, ~16 general
   - Mix of short and long sentences
 2. For each sentence, write a **human-quality neutral rewrite** by hand
 3. Save as JSON: `data/test_sentences/eval_set.json`
   ```json
    [
-     {"id": 1, "biased": "...", "bias_type": "left", "reference_neutral": "..."},
+     {"id": 1, "biased": "...", "reference_neutral": "..."},
      ...
    ]
   ```
@@ -271,7 +266,7 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 
 - Dataset cleaned and preprocessed
 - TF-IDF baseline trained; F1 scores recorded as B1 baseline
-- 3 rewrite prompt templates drafted and tested on 20 sentences
+- General rewrite prompt drafted and tested on 20 sentences
 - MLflow experiment set up and first baseline run logged
 - Data visualizations created (4 PNGs)
 - Semantic similarity scorer working and tested
@@ -290,7 +285,7 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 
 #### Task 2.1: Fine-Tune BERT Classifier
 
-**What:** Train a BERT model on bias classification task.
+**What:** Train a BERT model on binary bias classification (biased vs non-biased).
 
 **Specific Steps:**
 
@@ -300,16 +295,14 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
   - Learning rate: 2e-5
   - Epochs: 3 (with early stopping, patience=2)
   - Loss: Cross-entropy with class weighting
-3. Train **Task B** (3-class: left/center/right on biased samples only):
-  - Apply oversampling (SMOTE/manual duplication) if minority F1 < 0.50
   - Save best validation checkpoint
-4. Log all runs to MLflow
+3. Log all runs to MLflow
 
 **Done when:**
 
-- Both Task A and Task B models trained and saved
+- Task A model trained and saved
 - BERT F1 macro ≥ TF-IDF baseline
-- Models saved to `models/bert_classifier/`
+- Model saved to `models/bert_classifier/`
 - MLflow runs logged with hyperparameters and metrics
 
 ---
@@ -323,11 +316,11 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 1. Replace stub with real function:
   - Load BERT checkpoint
   - Run inference on input sentence
-  - Return: `bias_label`, `bias_type`, `bias_score`
+  - Return: `bias_label`, `bias_score`
 2. `bias_score` = softmax probability of 'biased' class
 3. Write unit test:
   - Input: `"The reckless senator pushed through the controversial bill"`
-  - Assert: `bias_score > 0.5` and `bias_type == "right"`
+  - Assert: `bias_score > 0.5`
 
 **Done when:**
 
@@ -345,11 +338,11 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 
 1. Replace stub with real function:
   - Check if `bias_score > 0.5`; if not, skip rewrite
-  - Select prompt template based on `bias_type`
+  - Use general prompt template
   - Call Mistral 7B with: `max_new_tokens=200, temperature=0.3, do_sample=True`
   - Parse output (strip preamble like "Sure! Here is...")
   - Return clean rewritten sentence
-2. Log: input sentence, bias type, rewritten output
+2. Log: input sentence, rewritten output
 
 **Done when:**
 
@@ -367,7 +360,7 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 
 1. Create MLflow run: `bert-vs-tfidf-comparison`
 2. Log side-by-side metrics on validation set:
-  - F1 macro, F1 per class (left/center/right)
+  - F1 macro, F1 per class (biased/non-biased)
   - Precision, Recall per class
   - Both models on same val set for fair comparison
 
@@ -433,7 +426,7 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
    {
      "original": "...",
      "rewritten": "...",
-     "bias_label": "left",
+     "bias_label": "biased",
      "bias_score_before": 0.91,
      "bias_score_after": 0.15,
      "similarity": 0.84,
@@ -520,7 +513,7 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 
 - BERT checkpoint trained and saved to `models/bert_classifier/`
 - Bias classifier node working with unit test passing
-- Rewrite node implemented with 3 prompt templates
+- Rewrite node implemented with general prompt template
 - BERT vs TF-IDF comparison logged to MLflow
 - Safety check node with retry logic implemented and tested
 - Post-rewrite bias re-evaluation working
@@ -546,11 +539,11 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 
 1. Run classifiers on test set (unseen during training)
 2. Compute and record:
-  - Accuracy, F1 macro, F1 per class
+  - Accuracy, F1 macro, F1 per class (biased/non-biased)
   - Precision, Recall per class
-  - Confusion matrix
+  - Confusion matrix (2×2)
 3. Log to MLflow run: `final-test-evaluation`
-4. Plot confusion matrices (matplotlib/seaborn); save as PNG
+4. Plot confusion matrix (matplotlib/seaborn); save as PNG
 
 **Done when:**
 
@@ -599,7 +592,7 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
   - Error analysis: which sentences were hardest to classify? Why?
 2. **Section: "LLM Rewrite Module"** (~300 words)
   - Model choice (Mistral 7B Instruct)
-  - Prompt design approach
+  - General prompt design approach
   - Examples: 2 good rewrites, 1 bad rewrite with explanation
   - Why structured prompting (with classifier) beats direct LLM (B3)
 
@@ -733,8 +726,8 @@ cla# Bias Detection & Neutralization in News Text — 3-Week Project Plan
 1. Pick 3–5 input/output pairs that best show pipeline behavior
 2. For each, create a clean table:
   ```
-   | Original | Bias Type | Rewritten | Bias Before | Bias After | Similarity |
-   | "..." | right | "..." | 0.92 | 0.15 | 0.84 |
+   | Original | Rewritten | Bias Before | Bias After | Similarity |
+   | "..." | "..." | 0.92 | 0.15 | 0.84 |
   ```
 3. Include: 2 success cases, 1 partial success (low similarity), 1 failure (max retries)
 
@@ -859,7 +852,6 @@ Before submitting, verify:
 | Criterion                    | Target                                     | Owner  |
 | ---------------------------- | ------------------------------------------ | ------ |
 | **BERT F1 > TF-IDF F1**      | BERT macro F1 higher                       | Alex   |
-| **Minority class detection** | Left/right F1 > 0.50                       | Alex   |
 | **Bias reduction**           | ≥ 50% score drop on average                | Daniel |
 | **Semantic preservation**    | SBERT similarity ≥ 0.80 on average         | Daniel |
 | **Pipeline stability**       | 100% of 50 test sentences complete         | Daniel |
