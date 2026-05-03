@@ -5,10 +5,18 @@ __pycache__/
 
 # Data files
 data/
-results/
-models/
 mlruns/
 mlflow.db
+
+# Model artifacts
+models/**/checkpoint-*/
+models/**/*.safetensors
+models/**/*.bin
+models/**/*.pt
+models/**/*.pth
+models/**/*.h5
+models/**/*.onnx
+models/**/*.msgpack
 
 # macOS files
 .DS_Store
