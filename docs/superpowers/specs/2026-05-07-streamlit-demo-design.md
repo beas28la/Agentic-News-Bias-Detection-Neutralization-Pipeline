@@ -66,7 +66,7 @@ When the input is non-biased (`bias_score_before <= 0.5`):
 - Only the original panel renders, styled green with a `NON-BIASED` badge.
 - The rewrite panel is replaced by an info message: "No rewrite needed."
 
-**Metric strip** below the panels — three `st.metric` cards:
+**Metric strip** below the panels — three `st.metric` cards. The strip and the warning banner are rendered **only on the biased branch** (see "Why" below):
 
 | Tile | Value | Caption |
 |------|-------|---------|
@@ -74,7 +74,9 @@ When the input is non-biased (`bias_score_before <= 0.5`):
 | Bias drop | `before − after` (signed, 2 decimals) | "{before} → {after}" |
 | Retries | `retries` | "of 3 max" |
 
-When `warning` is present (max retries hit, similarity below threshold), show a yellow `st.warning` banner above the metric strip with the warning text.
+When `warning` is present (max retries hit, similarity below threshold), show a yellow `st.warning` banner above the metric strip with the warning text. The warning can only fire on the biased branch (it's set by `add_max_retry_warning` after `safety_check_node`, both of which are skipped for non-biased input), so co-locating it inside the biased branch matches pipeline reality.
+
+**Why the metrics are biased-only:** the pipeline's `route_after_classifier` routes non-biased inputs directly to `post_rewrite_bias`, skipping `safety_check_node`. So for non-biased input, `similarity_score` is `None`, `retries` is `0`, and `bias_score_before − bias_score_after` is the trivial difference of scoring the same sentence twice. None of these are meaningful, and rendering them would crash on `format_score(None)`.
 
 ### Loading state
 
