@@ -62,4 +62,74 @@ if st.session_state.get("error") is not None:
         st.error(msg)
 
 if st.session_state.get("result") is not None:
-    st.json(st.session_state["result"])  # temporary — replaced in Task 5
+    from app_helpers import format_score, is_biased
+
+    result = st.session_state["result"]
+    biased = is_biased(result["bias_score_before"])
+
+    if biased:
+        col_left, col_right = st.columns(2)
+        with col_left:
+            st.markdown(
+                f"""
+                <div style="border:1px solid #fca5a5;border-radius:8px;
+                            padding:14px;background:#fef2f2">
+                  <div style="display:flex;justify-content:space-between;
+                              align-items:center;margin-bottom:8px">
+                    <span style="font-size:11px;color:#dc2626;
+                                 text-transform:uppercase;font-weight:600">
+                      Original
+                    </span>
+                    <span style="font-size:11px;background:#dc2626;color:white;
+                                 padding:2px 8px;border-radius:10px">
+                      BIASED · {format_score(result["bias_score_before"])}
+                    </span>
+                  </div>
+                  <div style="font-size:14px;color:#111">{result["original"]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with col_right:
+            st.markdown(
+                f"""
+                <div style="border:1px solid #86efac;border-radius:8px;
+                            padding:14px;background:#f0fdf4">
+                  <div style="display:flex;justify-content:space-between;
+                              align-items:center;margin-bottom:8px">
+                    <span style="font-size:11px;color:#15803d;
+                                 text-transform:uppercase;font-weight:600">
+                      Neutral rewrite
+                    </span>
+                    <span style="font-size:11px;background:#15803d;color:white;
+                                 padding:2px 8px;border-radius:10px">
+                      {format_score(result["bias_score_after"])}
+                    </span>
+                  </div>
+                  <div style="font-size:14px;color:#111">{result["rewritten"]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        st.markdown(
+            f"""
+            <div style="border:1px solid #86efac;border-radius:8px;
+                        padding:14px;background:#f0fdf4">
+              <div style="display:flex;justify-content:space-between;
+                          align-items:center;margin-bottom:8px">
+                <span style="font-size:11px;color:#15803d;
+                             text-transform:uppercase;font-weight:600">
+                  Original
+                </span>
+                <span style="font-size:11px;background:#15803d;color:white;
+                             padding:2px 8px;border-radius:10px">
+                  NON-BIASED · {format_score(result["bias_score_before"])}
+                </span>
+              </div>
+              <div style="font-size:14px;color:#111">{result["original"]}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.info("No rewrite needed.")
