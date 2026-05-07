@@ -5,6 +5,7 @@ Run with: streamlit run app.py
 
 from __future__ import annotations
 
+import html
 import sys
 from pathlib import Path
 
@@ -61,6 +62,39 @@ if st.session_state.get("error") is not None:
     else:
         st.error(msg)
 
+def _render_card(label: str, badge_text: str, body: str, *, variant: str) -> None:
+    """Render one of the side-by-side result cards.
+
+    variant must be "red" or "green". Uses unsafe_allow_html=True; body is
+    html-escaped to be safe with arbitrary input.
+    """
+    palette = {
+        "red": ("#fca5a5", "#fef2f2", "#dc2626"),
+        "green": ("#86efac", "#f0fdf4", "#15803d"),
+    }
+    border, bg, accent = palette[variant]
+    st.markdown(
+        f"""
+        <div style="border:1px solid {border};border-radius:8px;
+                    padding:14px;background:{bg}">
+          <div style="display:flex;justify-content:space-between;
+                      align-items:center;margin-bottom:8px">
+            <span style="font-size:11px;color:{accent};
+                         text-transform:uppercase;font-weight:600">
+              {html.escape(label)}
+            </span>
+            <span style="font-size:11px;background:{accent};color:white;
+                         padding:2px 8px;border-radius:10px">
+              {html.escape(badge_text)}
+            </span>
+          </div>
+          <div style="font-size:14px;color:#111">{html.escape(body)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 if st.session_state.get("result") is not None:
     from app_helpers import format_score, is_biased
 
@@ -70,66 +104,24 @@ if st.session_state.get("result") is not None:
     if biased:
         col_left, col_right = st.columns(2)
         with col_left:
-            st.markdown(
-                f"""
-                <div style="border:1px solid #fca5a5;border-radius:8px;
-                            padding:14px;background:#fef2f2">
-                  <div style="display:flex;justify-content:space-between;
-                              align-items:center;margin-bottom:8px">
-                    <span style="font-size:11px;color:#dc2626;
-                                 text-transform:uppercase;font-weight:600">
-                      Original
-                    </span>
-                    <span style="font-size:11px;background:#dc2626;color:white;
-                                 padding:2px 8px;border-radius:10px">
-                      BIASED · {format_score(result["bias_score_before"])}
-                    </span>
-                  </div>
-                  <div style="font-size:14px;color:#111">{result["original"]}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
+            _render_card(
+                "Original",
+                f"BIASED · {format_score(result['bias_score_before'])}",
+                result["original"],
+                variant="red",
             )
         with col_right:
-            st.markdown(
-                f"""
-                <div style="border:1px solid #86efac;border-radius:8px;
-                            padding:14px;background:#f0fdf4">
-                  <div style="display:flex;justify-content:space-between;
-                              align-items:center;margin-bottom:8px">
-                    <span style="font-size:11px;color:#15803d;
-                                 text-transform:uppercase;font-weight:600">
-                      Neutral rewrite
-                    </span>
-                    <span style="font-size:11px;background:#15803d;color:white;
-                                 padding:2px 8px;border-radius:10px">
-                      {format_score(result["bias_score_after"])}
-                    </span>
-                  </div>
-                  <div style="font-size:14px;color:#111">{result["rewritten"]}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
+            _render_card(
+                "Neutral rewrite",
+                format_score(result["bias_score_after"]),
+                result["rewritten"],
+                variant="green",
             )
     else:
-        st.markdown(
-            f"""
-            <div style="border:1px solid #86efac;border-radius:8px;
-                        padding:14px;background:#f0fdf4">
-              <div style="display:flex;justify-content:space-between;
-                          align-items:center;margin-bottom:8px">
-                <span style="font-size:11px;color:#15803d;
-                             text-transform:uppercase;font-weight:600">
-                  Original
-                </span>
-                <span style="font-size:11px;background:#15803d;color:white;
-                             padding:2px 8px;border-radius:10px">
-                  NON-BIASED · {format_score(result["bias_score_before"])}
-                </span>
-              </div>
-              <div style="font-size:14px;color:#111">{result["original"]}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        _render_card(
+            "Original",
+            f"NON-BIASED · {format_score(result['bias_score_before'])}",
+            result["original"],
+            variant="green",
         )
         st.info("No rewrite needed.")
