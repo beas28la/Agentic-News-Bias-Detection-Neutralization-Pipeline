@@ -117,6 +117,31 @@ if st.session_state.get("result") is not None:
                 result["rewritten"],
                 variant="green",
             )
+
+        if result.get("warning"):
+            st.warning(result["warning"])
+
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+        m1, m2, m3 = st.columns(3)
+        bias_drop = result["bias_score_before"] - result["bias_score_after"]
+        m1.metric(
+            "Semantic similarity",
+            format_score(result["similarity"]),
+            help="≥ 0.80 threshold",
+        )
+        m2.metric(
+            "Bias drop",
+            f"{bias_drop:+.2f}",
+            help=format_bias_drop_caption(
+                result["bias_score_before"], result["bias_score_after"]
+            ),
+        )
+        m3.metric(
+            "Retries",
+            str(result.get("retries", 0)),
+            help="of 3 max",
+        )
     else:
         _render_card(
             "Original",
@@ -125,28 +150,3 @@ if st.session_state.get("result") is not None:
             variant="green",
         )
         st.info("No rewrite needed.")
-
-    if result.get("warning"):
-        st.warning(result["warning"])
-
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-    m1, m2, m3 = st.columns(3)
-    bias_drop = result["bias_score_before"] - result["bias_score_after"]
-    m1.metric(
-        "Semantic similarity",
-        format_score(result["similarity"]),
-        help="≥ 0.80 threshold",
-    )
-    m2.metric(
-        "Bias drop",
-        f"{bias_drop:+.2f}",
-        help=format_bias_drop_caption(
-            result["bias_score_before"], result["bias_score_after"]
-        ),
-    )
-    m3.metric(
-        "Retries",
-        str(result.get("retries", 0)),
-        help="of 3 max",
-    )
