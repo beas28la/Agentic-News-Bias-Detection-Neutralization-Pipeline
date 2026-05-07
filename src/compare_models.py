@@ -1,6 +1,10 @@
 """
-Task 2.4 — BERT vs TF-IDF comparison on the validation set.
-Logs a single MLflow run with side-by-side metrics from both models.
+Evaluates both classifiers on the validation set and logs a side-by-side comparison to MLflow.
+
+Both models must be trained before running this script:
+    python src/classifier.py       # trains TF-IDF baseline
+    python src/bert_classifier.py  # trains BERT classifier
+    python src/compare_models.py   # runs comparison
 """
 
 import os
@@ -46,6 +50,7 @@ def eval_bert(texts: list[str], labels: list[int]) -> dict:
     model.eval()
 
     all_preds = []
+    # Batch to avoid OOM on CPU when the val set is large.
     for i in range(0, len(texts), BATCH_SIZE):
         batch = texts[i : i + BATCH_SIZE]
         enc = tokenizer(batch, truncation=True, padding=True,

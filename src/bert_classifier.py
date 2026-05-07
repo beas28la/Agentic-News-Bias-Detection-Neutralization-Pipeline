@@ -1,5 +1,8 @@
 """
-BERT binary bias classifier (biased vs non-biased) — Task 2.1.
+Fine-tunes bert-base-uncased for binary bias classification (biased vs non-biased).
+
+Usage:
+    python src/bert_classifier.py    # trains and saves to models/bert_classifier/
 """
 
 import os
@@ -101,6 +104,8 @@ def train() -> dict:
     train_dataset = BiasDataset(train_enc, train_labels)
     val_dataset = BiasDataset(val_enc, val_labels)
 
+    # "balanced" derives weights inversely proportional to class frequency,
+    # compensating for any skew between biased/non-biased without manual tuning.
     class_weights = compute_class_weight(
         class_weight="balanced", classes=np.array([0, 1]), y=np.array(train_labels)
     )
@@ -142,8 +147,8 @@ def train() -> dict:
 
     trainer.train()
 
-    # Evaluate best checkpoint on val set
     eval_results = trainer.evaluate()
+    # Trainer prefixes metric keys with "eval_"; strip that prefix for MLflow logging.
     metrics = {k.replace("eval_", ""): v for k, v in eval_results.items() if "f1" in k or "precision" in k or "recall" in k}
 
     # Save best model and tokenizer

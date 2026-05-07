@@ -1,5 +1,8 @@
 """
-TF-IDF baseline classifier for binary bias detection (biased vs non-biased).
+TF-IDF + Logistic Regression baseline for binary bias detection (biased vs non-biased).
+
+Usage:
+    python src/classifier.py    # trains and saves to models/tfidf_baseline/
 """
 
 import pickle
@@ -24,6 +27,7 @@ MODEL_PATH = MODEL_DIR / "model.pkl"
 
 
 def load_split(split: str) -> tuple[list[str], list[int]]:
+    """Load sentences and binary labels (1=biased, 0=non-biased) from a processed CSV split."""
     df = pd.read_csv(DATA_DIR / f"{split}.csv")
     texts = df["sentence"].tolist()
     labels = (df["label"] == "biased").astype(int).tolist()
@@ -31,6 +35,7 @@ def load_split(split: str) -> tuple[list[str], list[int]]:
 
 
 def train() -> dict:
+    """Train TF-IDF + LogisticRegression, save artifacts, return val metrics dict."""
     train_texts, train_labels = load_split("train")
     val_texts, val_labels = load_split("val")
 
@@ -68,6 +73,7 @@ def train() -> dict:
 
 
 def predict(texts: list[str]) -> list[dict]:
+    """Run inference on a list of sentences. Returns [{bias_label, bias_score}, ...]."""
     with open(VECTORIZER_PATH, "rb") as f:
         vectorizer = pickle.load(f)
     with open(MODEL_PATH, "rb") as f:
