@@ -1,6 +1,6 @@
-# Bias Detection & Neutralization in News Text
+# Agentic-News-Bias-Detection-Neutralization-Pipeline
 
-An end-to-end NLP pipeline that detects political bias in news sentences, rewrites them into neutral language, and validates that the original meaning is preserved.
+An end-to-end NLP pipeline that detects political bias in news sentences, rewrites them into neutral language, and validates that the original meaning is preserved. 
 
 ---
 
@@ -23,6 +23,8 @@ Five LangGraph nodes: **Input → Bias Classifier → Rewrite → Safety Check �
 
 ```
 .
+├── app.py                  # Streamlit demo frontend
+├── app_helpers.py          # Pure formatting / threshold helpers used by app.py
 ├── src/
 │   ├── pipeline.py         # LangGraph pipeline (main entry point)
 │   ├── rewrite.py          # Mistral 7B rewrite via Ollama
@@ -31,6 +33,7 @@ Five LangGraph nodes: **Input → Bias Classifier → Rewrite → Safety Check �
 │   ├── compare_models.py   # BERT vs TF-IDF comparison (MLflow)
 │   └── preprocessing.py    # Download BABE, clean, stratified split
 ├── tests/
+│   ├── test_app_helpers.py
 │   ├── test_bias_classifier_node.py
 │   └── test_rewrite_node.py
 ├── notebooks/
@@ -44,20 +47,34 @@ Five LangGraph nodes: **Input → Bias Classifier → Rewrite → Safety Check �
 ├── results/
 │   └── rewrite_sample.xlsx # Sample rewrites for 20 biased sentences
 ├── requirements.txt
-├── CLAUDE.md
 └── project_plan.md
 ```
 
 ---
 
-## Setup
+## Run the project
 
-**Prerequisites:** Python 3.10+, [Ollama](https://ollama.com) with Mistral pulled
+**Prerequisites:** Python 3.10+, [Ollama](https://ollama.com).
 
 ```bash
+# 1. clone and install
+git clone https://github.com/beas28la/Agentic-News-Bias-Detection-Neutralization-Pipeline.git
+cd Agentic-News-Bias-Detection-Neutralization-Pipeline
 pip install -r requirements.txt
+
+# 2. start Ollama and pull the rewrite model (one-time)
+ollama serve &
 ollama pull mistral:7b-instruct-v0.3-q4_K_M
+
+# 3a. launch the Streamlit demo
+streamlit run app.py
+# → open http://localhost:8501
+
+# 3b. or run the pipeline directly from the CLI
+python src/pipeline.py
 ```
+
+The Streamlit demo (`app.py`) loads the trained BERT classifier and SBERT once at startup, then lets you type a sentence or click an example to see the bias verdict, neutral rewrite, and supporting metrics side-by-side. Pure formatting and threshold helpers live in `app_helpers.py` and are unit-tested in `tests/test_app_helpers.py`.
 
 ---
 
@@ -182,22 +199,3 @@ mlflow ui          # opens at http://localhost:5000
 - [LangGraph](https://github.com/langchain-ai/langgraph) — pipeline orchestration
 - [Mistral 7B Instruct](https://mistral.ai) via [Ollama](https://ollama.com)
 
----
-
-## Demo (Streamlit frontend)
-
-A single-page demo that wraps the full pipeline.
-
-```bash
-# 1. install demo dep (already in requirements.txt)
-pip install -r requirements.txt
-
-# 2. make sure Ollama is running with the rewrite model
-ollama serve &
-ollama pull mistral:7b-instruct-v0.3-q4_K_M
-
-# 3. launch the app
-streamlit run app.py
-```
-
-Open http://localhost:8501. Type a sentence or click an example.
