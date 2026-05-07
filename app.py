@@ -18,6 +18,11 @@ if str(SRC_DIR) not in sys.path:
 
 from pipeline import run  # noqa: E402 — must come after sys.path mutation
 
+st.set_page_config(
+    page_title="News Bias Detection & Neutralization",
+    layout="centered",
+)
+
 
 @st.cache_resource(show_spinner="Loading models...")
 def _warmup():
@@ -26,11 +31,6 @@ def _warmup():
 
 
 _warmup()
-
-st.set_page_config(
-    page_title="News Bias Detection & Neutralization",
-    layout="centered",
-)
 
 st.title("News Bias Detection & Neutralization")
 
