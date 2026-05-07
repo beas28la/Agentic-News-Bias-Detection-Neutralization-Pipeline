@@ -28,5 +28,8 @@ matplotlib>=3.8.0
 seaborn>=0.13.0
 jupyter>=1.0.0
 
+# ---- Demo frontend ----
+streamlit>=1.36.0
+
 # ---- Testing ----
 pytest>=8.0.0
