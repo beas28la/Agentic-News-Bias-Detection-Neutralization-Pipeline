@@ -25,6 +25,11 @@ st.set_page_config(
 
 st.title("News Bias Detection & Neutralization")
 
+# Apply any pending sentence queued by an example button (must run before
+# the text_area widget is instantiated, otherwise Streamlit raises).
+if "pending_sentence" in st.session_state:
+    st.session_state["sentence"] = st.session_state.pop("pending_sentence")
+
 if "sentence" not in st.session_state:
     st.session_state["sentence"] = ""
 
@@ -41,10 +46,36 @@ analyze_clicked = st.button(
     disabled=not sentence.strip(),
 )
 
-if analyze_clicked:
+EXAMPLES = {
+    "Biased (left-leaning)": (
+        "The reckless senator pushed through the controversial bill."
+    ),
+    "Biased (right-leaning)": (
+        "Activist judges legislated from the bench, ignoring the will of the people."
+    ),
+    "Neutral": (
+        "The senate passed the infrastructure bill on Tuesday."
+    ),
+}
+
+st.caption("Or try an example:")
+ex_cols = st.columns(len(EXAMPLES))
+example_clicked = None
+for col, (label, text) in zip(ex_cols, EXAMPLES.items()):
+    if col.button(label, use_container_width=True):
+        example_clicked = text
+
+if example_clicked is not None:
+    st.session_state["pending_sentence"] = example_clicked
+    st.session_state["pending_run"] = example_clicked
+    st.rerun()
+
+pending = st.session_state.pop("pending_run", None)
+if analyze_clicked or pending is not None:
+    target = pending if pending is not None else sentence.strip()
     with st.spinner("Running pipeline..."):
         try:
-            st.session_state["result"] = run(sentence.strip())
+            st.session_state["result"] = run(target)
             st.session_state["error"] = None
         except Exception as exc:  # noqa: BLE001 — surface anything to the UI
             st.session_state["result"] = None
