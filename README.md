@@ -182,3 +182,22 @@ mlflow ui          # opens at http://localhost:5000
 - [LangGraph](https://github.com/langchain-ai/langgraph) — pipeline orchestration
 - [Mistral 7B Instruct](https://mistral.ai) via [Ollama](https://ollama.com)
 
+---
+
+## Demo (Streamlit frontend)
+
+A single-page demo that wraps the full pipeline.
+
+```bash
+# 1. install demo dep (already in requirements.txt)
+pip install -r requirements.txt
+
+# 2. make sure Ollama is running with the rewrite model
+ollama serve &
+ollama pull mistral:7b-instruct-v0.3-q4_K_M
+
+# 3. launch the app
+streamlit run app.py
+```
+
+Open http://localhost:8501. Type a sentence or click an example.
