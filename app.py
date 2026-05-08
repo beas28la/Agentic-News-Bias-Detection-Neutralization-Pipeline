@@ -19,7 +19,8 @@ if str(SRC_DIR) not in sys.path:
 from pipeline import run  # noqa: E402 — must come after sys.path mutation
 
 st.set_page_config(
-    page_title="News Bias Detection & Neutralization",
+    page_title="BiasGuard",
+    page_icon="🛡️",
     layout="centered",
 )
 
@@ -32,7 +33,9 @@ def _warmup():
 
 _warmup()
 
-st.title("News Bias Detection & Neutralization")
+st.title("🛡️ BiasGuard")
+st.subheader("News Bias Detection and Neutralization System")
+
 
 # Apply any pending sentence queued by an example button (must run before
 # the text_area widget is instantiated, otherwise Streamlit raises).

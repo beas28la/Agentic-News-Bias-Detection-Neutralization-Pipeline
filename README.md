@@ -1,8 +1,10 @@
-# Agentic-News-Bias-Detection-Neutralization-Pipeline
+# BiasGuard-LLM-Based-News-Bias-Detection-and-Neutralization-System
 
-![News Bias Detection UI](assets/readme-ui-preview.png)
+News Bias Detection UI
 
 An end-to-end NLP pipeline that detects political bias in news sentences, rewrites them into neutral language, and validates that the original meaning is preserved. 
+
+![BiasGuard UI Preview](assets/readme-ui-preview.png)
 
 ---
 
@@ -60,8 +62,8 @@ Five LangGraph nodes: **Input → Bias Classifier → Rewrite → Safety Check �
 
 ```bash
 # 1. clone and install
-git clone https://github.com/beas28la/Agentic-News-Bias-Detection-Neutralization-Pipeline.git
-cd Agentic-News-Bias-Detection-Neutralization-Pipeline
+git clone https://github.com/beas28la/BiasGuard-LLM-Based-News-Bias-Detection-and-Neutralization-System.git
+cd BiasGuard-LLM-Based-News-Bias-Detection-and-Neutralization-System
 pip install -r requirements.txt
 
 # 2. start Ollama and pull the rewrite model (one-time)
@@ -200,4 +202,3 @@ mlflow ui          # opens at http://localhost:5000
 - Reimers & Gupta, "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks" (2019)
 - [LangGraph](https://github.com/langchain-ai/langgraph) — pipeline orchestration
 - [Mistral 7B Instruct](https://mistral.ai) via [Ollama](https://ollama.com)
-
