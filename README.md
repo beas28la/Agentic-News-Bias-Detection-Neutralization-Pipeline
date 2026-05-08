@@ -1,7 +1,5 @@
 # BiasGuard-LLM-Based-News-Bias-Detection-and-Neutralization-System
 
-News Bias Detection UI
-
 An end-to-end NLP pipeline that detects political bias in news sentences, rewrites them into neutral language, and validates that the original meaning is preserved. 
 
 ![BiasGuard UI Preview](assets/readme-ui-preview.png)
