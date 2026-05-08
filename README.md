@@ -1,5 +1,7 @@
 # Agentic-News-Bias-Detection-Neutralization-Pipeline
 
+![News Bias Detection UI](assets/readme-ui-preview.png)
+
 An end-to-end NLP pipeline that detects political bias in news sentences, rewrites them into neutral language, and validates that the original meaning is preserved. 
 
 ---
