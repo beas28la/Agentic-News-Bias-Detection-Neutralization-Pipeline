@@ -29,6 +29,15 @@ _SYSTEM_PROMPT = (
 
 _USER_TEMPLATE = "Rewrite this sentence in neutral language:\n\n{sentence}"
 
+# Used on retries when the previous rewrite drifted too far semantically
+_RETRY_TEMPLATE = (
+    "Your previous rewrite changed the meaning too much (similarity: {similarity:.0%}).\n\n"
+    "Original: {original}\n"
+    "Previous rewrite: {previous}\n\n"
+    "Rewrite the original sentence again in neutral language, staying much closer to the "
+    "original meaning and wording. Only change biased or emotionally charged words."
+)
+
 # Strips common LLM preambles: "Sure! Here is...", "Of course, ...", "Certainly! ..."
 _PREAMBLE_RE = re.compile(
     r"^(sure[,!]?\s*(here('?s| is)[^:]*:\s*)?|of course[,!]?\s*|certainly[,!]?\s*"
@@ -55,14 +64,28 @@ def _clean(text: str) -> str:
     return text
 
 
-def rewrite_sentence(sentence: str) -> str:
+def rewrite_sentence(
+    sentence: str,
+    previous_rewrite: str | None = None,
+    similarity_score: float | None = None,
+    temperature: float = TEMPERATURE,
+) -> str:
     """
     Call Mistral 7B to rewrite a biased sentence into neutral language.
+    On retries, pass previous_rewrite and similarity_score for corrective prompting.
     Returns the cleaned rewritten sentence.
     """
     logger.info("INPUT : %s", sentence)
 
-    prompt = _USER_TEMPLATE.format(sentence=sentence)
+    if previous_rewrite and similarity_score is not None:
+        prompt = _RETRY_TEMPLATE.format(
+            original=sentence,
+            previous=previous_rewrite,
+            similarity=similarity_score,
+        )
+    else:
+        prompt = _USER_TEMPLATE.format(sentence=sentence)
+
     resp = ollama.chat(
         model=OLLAMA_MODEL,
         messages=[
@@ -70,7 +93,7 @@ def rewrite_sentence(sentence: str) -> str:
             {"role": "user", "content": prompt},
         ],
         options={
-            "temperature": TEMPERATURE,
+            "temperature": temperature,
             "num_predict": MAX_NEW_TOKENS,
         },
     )

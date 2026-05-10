@@ -9,15 +9,20 @@ An end-to-end NLP pipeline that detects political bias in news sentences, rewrit
 ## How It Works
 
 ```
-Input sentence
-    → BERT Bias Classifier
-    → Rewrite via Mistral 7B (if bias_score > 0.5)
-    → SBERT Similarity Check  ←──────────────┐
-    → Re-score rewritten sentence             │
-    → Output                    retry if sim < 0.80 (max 3x)
+Input → Bias Classifier → [not biased] → Post-Rewrite Score → Output
+                        ↓
+                     [biased]
+                        ↓
+                   Rewrite (Mistral 7B)
+                        ↓
+               SBERT Similarity Check
+                 ↙              ↘
+          sim ≥ 0.70        sim < 0.70
+              ↓              ↓ retry (max 3x, corrective prompt)
+        Post-Rewrite Score → Output
 ```
 
-Five LangGraph nodes: **Input → Bias Classifier → Rewrite → Safety Check → Output**
+On each retry, the pipeline sends the previous rewrite and similarity score back to the LLM with a corrective prompt, and lowers the temperature (0.3 → 0.2 → 0.1) to reduce semantic drift.
 
 ---
 
@@ -145,6 +150,27 @@ pytest tests/
 
 ---
 
+## Results
+
+**Classifier performance** (BABE test set):
+
+| Model    | F1 Macro | F1 Biased | F1 Non-Biased |
+| -------- | -------- | --------- | ------------- |
+| TF-IDF   | 0.713    | 0.786     | 0.639         |
+| **BERT** | **0.840**| **0.846** | **0.833**     |
+
+BERT outperforms the TF-IDF baseline by **+12.7 F1 macro** points, with the largest gain on non-biased detection (+19.4).
+
+**Rewrite pipeline performance** (20 biased sentences from BABE):
+
+| Metric                    | Value  |
+| ------------------------- | ------ |
+| Avg bias score before | 0.790 |
+| Avg bias score after  | 0.131 |
+| Avg SBERT similarity  | 0.728 |
+
+---
+
 ## Dataset
 
 **BABE** (`mediabiasgroup/BABE`, Spinde et al. 2022) — ~4,121 expert-annotated sentences, ~50/50 biased vs non-biased. Splits are stratified by `(label, outlet)`.
@@ -156,14 +182,14 @@ pytest tests/
 ## Key Thresholds
 
 
-| Parameter                     | Value |
-| ----------------------------- | ----- |
-| Bias classification threshold | 0.5   |
-| SBERT similarity threshold    | 0.80  |
-| Max retries                   | 3     |
-| LLM temperature               | 0.3   |
-| BERT learning rate            | 2e-5  |
-| BERT epochs                   | 3     |
+| Parameter                     | Value              |
+| ----------------------------- | ------------------ |
+| Bias classification threshold | 0.5                |
+| SBERT similarity threshold    | 0.70               |
+| Max retries                   | 3                  |
+| LLM temperature (retry 1/2/3) | 0.3 → 0.2 → 0.1   |
+| BERT learning rate            | 2e-5               |
+| BERT epochs                   | 3                  |
 
 
 ---
@@ -171,14 +197,15 @@ pytest tests/
 ## Pipeline Architecture
 
 
-| Node                     | Role                                                      |
-| ------------------------ | --------------------------------------------------------- |
-| **Input**                | Validates and normalizes input sentence                   |
-| **Bias Classifier**      | BERT inference → `bias_score` + `bias_label`              |
-| **Rewrite**              | Mistral 7B via Ollama rewrites if `bias_score > 0.5`      |
-| **Safety Check**         | SBERT cosine similarity vs original; retries if < 0.80    |
-| **Post-rewrite Scoring** | Re-runs BERT on rewritten sentence for `bias_score_after` |
-| **Output**               | Assembles final result dict                               |
+| Node                     | Role                                                                              |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| **Input**                | Validates and normalizes input sentence                                           |
+| **Bias Classifier**      | BERT inference → `bias_score` + `bias_label`                                      |
+| **Rewrite**              | Mistral 7B (Q4_K_M via Ollama) rewrites if `bias_score > 0.5`                    |
+| **Safety Check**         | SBERT cosine similarity vs original; retries with corrective prompt if sim < 0.70 |
+| **Warn**                 | Attaches warning if similarity remains below threshold after max retries          |
+| **Post-rewrite Scoring** | Re-runs BERT on rewritten sentence → `bias_score_after`                           |
+| **Output**               | Assembles final result dict                                                       |
 
 
 ---

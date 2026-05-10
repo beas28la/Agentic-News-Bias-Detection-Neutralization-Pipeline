@@ -31,7 +31,7 @@ BASE_DIR = Path(__file__).parent.parent
 BERT_MODEL_DIR = BASE_DIR / "models" / "bert_classifier"
 
 BIAS_THRESHOLD = 0.5
-SIMILARITY_THRESHOLD = 0.80
+SIMILARITY_THRESHOLD = 0.70
 MAX_RETRIES = 3
 MAX_LENGTH = 128
 
@@ -127,15 +127,26 @@ def bias_classifier_node(state: PipelineState) -> PipelineState:
 # Node 3: Rewrite
 # ---------------------------------------------------------------------------
 
+_RETRY_TEMPERATURES = [0.3, 0.2, 0.1]
+
+
 def rewrite_node(state: PipelineState) -> PipelineState:
     if (state.get("bias_score") or 0.0) <= BIAS_THRESHOLD:
         return {**state, "rewritten_sentence": state["input_sentence"]}
 
-    rewritten = rewrite_sentence(state["input_sentence"])
+    retry_count = state["retry_count"]
+    temperature = _RETRY_TEMPERATURES[min(retry_count, len(_RETRY_TEMPERATURES) - 1)]
+
+    rewritten = rewrite_sentence(
+        state["input_sentence"],
+        previous_rewrite=state.get("rewritten_sentence"),
+        similarity_score=state.get("similarity_score"),
+        temperature=temperature,
+    )
     return {
         **state,
         "rewritten_sentence": rewritten,
-        "retry_count": state["retry_count"] + 1,
+        "retry_count": retry_count + 1,
     }
 
 
